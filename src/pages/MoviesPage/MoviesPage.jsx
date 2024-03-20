@@ -8,38 +8,35 @@ import css from './MoviesPage.module.css';
 
 export default function MoviesPage() {
   const [movies, setMovies] = useState([]);
-  const [query, setQuery] = useState('');
   const [params, setParams] = useSearchParams();
   const location = useLocation();
 
   const value = params.get('query') ?? '';
 
   useEffect(() => {
-    setQuery(value);
-
-    if (query === '' || value === '') {
-      setMovies([]);
-      return;
-    }
-
     async function getData() {
+      if (value === '') {
+        setMovies([]);
+        return;
+      }
+
       try {
         const data = await fetchData(
-          `search/movie?query=${query}&include_adult=false&language=en-US`
+          `search/movie?query=${value}&include_adult=false&language=en-US`
         );
 
-        data.total_results === 0 &&
-          toast('Nothing was found for your request!', {
-            icon: '❗️',
-          });
+        if (data.total_results === 0) {
+          toast('Nothing was found for your request!', { icon: '❗️' });
+        }
 
         setMovies(data.results);
       } catch {
         toast.error('Something went wrong! Please reload the page!');
       }
     }
+    
     getData();
-  }, [setQuery, setMovies, query, value]);
+  }, [value]);
 
   const handleSubmit = (values, actions) => {
     if (values.query === '') {
@@ -47,7 +44,7 @@ export default function MoviesPage() {
       setMovies([]);
       return;
     }
-    setQuery(values.query);
+
     params.set('query', values.query);
     setParams(params);
     actions.resetForm();
